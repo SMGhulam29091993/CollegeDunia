@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTable } from "react-table";
 import { DummyData as data } from "./constant/sampleData";
 import { FaRupeeSign } from 'react-icons/fa';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 const App = () => {
   const parseCourseFees = (feesString) => {
     const courseFeesValue = parseInt(feesString.match(/\d+/g).join(''));
     return courseFeesValue;
   };
+
+  const [rowsToShow, setRowsToShow] = useState(10); // Initial number of rows to show
+  const [loading, setLoading] = useState(false); // Loading state for the delay
 
   const columns = React.useMemo(
     () => Object.keys(data[0]).map(key => {
@@ -47,33 +51,51 @@ const App = () => {
     data
   });
 
+  const loadMoreRows = () => {
+    setLoading(true); // Set loading to true to display loading message
+    setTimeout(() => {
+      setRowsToShow(prevRowsToShow => prevRowsToShow + 10); // Increase rows to show by 10 after a delay
+      setLoading(false); // Set loading to false after the delay
+    }, 1000); // 1000 milliseconds (1 second) delay
+  };
+
   return (
     <>
       <div className='container'>
-        <table {...getTableProps()} className='max-w-6xl mx-auto my-4 border-2 border-black'>
-          <thead className="border-2 border-black bg-green-300 text-white">
-            {headerGroups.map(hg => (
-              <tr  {...hg.getHeaderGroupProps()}>
-                {hg.headers.map(header => (
-                  <th className="border-2 border-black px-4 py-2" {...header.getHeaderProps()}>{header.render("Header")}</th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody {...getTableBodyProps()}>
-            {rows.map(row => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()} key={row.id}>
-                  {row.cells.map(cell => {
-                    const { getCellProps, render, column } = cell;
-                    return <td {...getCellProps()} key={column.id} className="px-4 py-2 border-2 border-slate-600">{render("Cell")}</td>;
-                  })}
+        <InfiniteScroll
+          dataLength={rowsToShow}
+          next={loadMoreRows}
+          hasMore={rowsToShow < data.length}
+          loader={<h4 >Loading...</h4>}
+          endMessage={<p>No more rows to show</p>}
+          scrollThreshold={0.9} // Load more rows when the user reaches 90% of the scrollable area
+        >
+          <table {...getTableProps()} className='max-w-6xl mx-auto my-4 border-2 border-black'>
+            <thead className="border-2 border-black bg-green-300 text-white">
+              {headerGroups.map(hg => (
+                <tr  {...hg.getHeaderGroupProps()}>
+                  {hg.headers.map(header => (
+                    <th className="border-2 border-black px-4 py-2" {...header.getHeaderProps()}>{header.render("Header")}</th>
+                  ))}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.slice(0, rowsToShow).map(row => { // Slice rows to display only the rows to show
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()} key={row.id}>
+                    {row.cells.map(cell => {
+                      const { getCellProps, render, column } = cell;
+                      return <td {...getCellProps()} key={column.id} className="px-4 py-2 border-2 border-slate-600">{render("Cell")}</td>;
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </InfiniteScroll>
+       
       </div>
     </>
   );
