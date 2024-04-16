@@ -3,6 +3,7 @@ import { useTable } from "react-table";
 import { DummyData as data } from "./constant/sampleData";
 import { FaRupeeSign } from 'react-icons/fa';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { BounceLoader } from 'react-spinners';
 
 const App = () => {
   const parseCourseFees = (feesString) => {
@@ -52,7 +53,7 @@ const App = () => {
   });
 
   const loadMoreRows = () => {
-    setLoading(true); // Set loading to true to display loading message
+    setLoading(true); // Set loading to true to display loading spinner
     setTimeout(() => {
       setRowsToShow(prevRowsToShow => prevRowsToShow + 10); // Increase rows to show by 10 after a delay
       setLoading(false); // Set loading to false after the delay
@@ -66,28 +67,32 @@ const App = () => {
           dataLength={rowsToShow}
           next={loadMoreRows}
           hasMore={rowsToShow < data.length}
-          loader={<h4 >Loading...</h4>}
-          endMessage={<p>No more rows to show</p>}
+          loader={
+            <div className="flex justify-center mt-4">
+              <BounceLoader color="#007bff" loading={loading} />
+            </div>
+          } // Show spinner while loading
+          endMessage={<p className='text-center'>No more rows to show</p>}
           scrollThreshold={0.9} // Load more rows when the user reaches 90% of the scrollable area
         >
-          <table {...getTableProps()} className='max-w-6xl mx-auto my-4 border-2 border-black'>
+          <table className='max-w-6xl mx-auto my-4 border-2 border-black'>
             <thead className="border-2 border-black bg-green-300 text-white">
               {headerGroups.map(hg => (
-                <tr  {...hg.getHeaderGroupProps()}>
+                <tr  key={hg.id} {...hg.getHeaderGroupProps()}>
                   {hg.headers.map(header => (
-                    <th className="border-2 border-black px-4 py-2" {...header.getHeaderProps()}>{header.render("Header")}</th>
+                    <th key={header.id} className="border-2 border-black px-4 py-2">{header.render("Header")}</th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody {...getTableBodyProps()}>
+            <tbody>
               {rows.slice(0, rowsToShow).map(row => { // Slice rows to display only the rows to show
                 prepareRow(row);
                 return (
-                  <tr {...row.getRowProps()} key={row.id}>
+                  <tr key={row.id} {...row.getRowProps()}>
                     {row.cells.map(cell => {
                       const { getCellProps, render, column } = cell;
-                      return <td {...getCellProps()} key={column.id} className="px-4 py-2 border-2 border-slate-600">{render("Cell")}</td>;
+                      return <td key={column.id} className="px-4 py-2 border-2 border-slate-600">{render("Cell")}</td>;
                     })}
                   </tr>
                 );
@@ -95,7 +100,6 @@ const App = () => {
             </tbody>
           </table>
         </InfiniteScroll>
-       
       </div>
     </>
   );
